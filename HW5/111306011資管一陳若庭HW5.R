@@ -1,0 +1,57 @@
+library(dplyr)
+library(magrittr)
+install.packages("NLP")
+library(NLP)
+library(wordcloud2)
+library(tibble)
+library(tidytext)
+library(tm)
+data <- read.csv("IMDb_Feature Film_2022_review_data.csv")
+movies_rate1 <- mean(subset(data, Title == "The Kashmir Files")$Rates)
+movies_rate2 <- mean(subset(data, Title == "Doctor Strange in the Multiverse of Madness")$Rates)
+movie1_reviews <- subset(data, Title == "The Kashmir Files")$Review
+movie2_reviews <- subset(data, Title == "Doctor Strange in the Multiverse of Madness")$Review
+x <- Corpus(VectorSource(movie1_reviews))
+y <- Corpus(VectorSource(movie2_reviews))
+movies_rate1
+movies_rate2
+# x <- tm_map(x, removeNumbers)
+x <- tm_map(x, tolower)
+x <- tm_map(x, removePunctuation)
+x <- tm_map(x, removeWords, stopwords("english"))
+x <- tm_map(x, stripWhitespace)
+x <- tm_map(x, stemDocument)
+x <- tm_map(x, removeWords, "movi")
+x <- tm_map(x, removeWords, "film")
+y <- tm_map(y, tolower)
+y <- tm_map(y, removePunctuation)
+y <- tm_map(y, removeWords, stopwords("english"))
+y <- tm_map(y, stripWhitespace)
+y <- tm_map(y, stemDocument)
+y <- tm_map(y, removeWords, "movi")
+y <- tm_map(y, removeWords, "film")
+
+x_tdm <- TermDocumentMatrix(x)
+y_tdm <- TermDocumentMatrix(y)
+# Convert TDM to matrix
+review_m_x <- as.matrix(x_tdm)
+review_m_y <- as.matrix(y_tdm)
+
+# Sum rows and create a frequency data frame
+freq_df_x <- rowSums(review_m_x)
+freq_df_y <- rowSums(review_m_y)
+# Sort term_frequency in descending order
+freq_df_x <- sort(freq_df_x, decreasing = TRUE)
+freq_df_y <- sort(freq_df_y, decreasing = TRUE)
+
+# Create a data frame with word frequencies
+freq_df_x <- data.frame(word = names(freq_df_x), num = freq_df_x)
+freq_df_y <- data.frame(word = names(freq_df_y), num = freq_df_y)
+
+freq_df_x <- freq_df_x %>% filter(num>50)
+freq_df_y <- freq_df_y %>% filter(num>150)
+# Generate the word cloud
+wordcloud2(freq_df_x, size = 0.5)
+wordcloud2(freq_df_y, size = 0.3)
+
+
